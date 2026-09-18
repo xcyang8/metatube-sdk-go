@@ -124,6 +124,13 @@ func (mw *MyWife) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err e
 		d.Head(strings.ReplaceAll(info.CoverURL, "topview.jpg", "thumb.jpg"))
 	})
 
+	// Capture HTML
+	c.OnResponse(func(r *colly.Response) {
+		if info.HTML == "" {
+			info.HTML = string(r.Body)
+		}
+	})
+
 	err = c.Visit(info.Homepage)
 	return
 }

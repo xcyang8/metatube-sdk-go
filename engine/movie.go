@@ -19,6 +19,9 @@ import (
 )
 
 func (e *Engine) searchMovieFromDB(keyword string, provider mt.MovieProvider, all bool) (results []*model.MovieSearchResult, err error) {
+	if e.noDB {
+		return
+	}
 	var infos []*model.MovieInfo
 	tx := e.db.
 		// Note: keyword might be an ID or just a regular number, so we should
@@ -215,14 +218,14 @@ func (e *Engine) getMovieInfoWithCallback(provider mt.MovieProvider, id string, 
 		}
 	}()
 	// Query DB first (by id).
-	if lazy {
+	if lazy && !e.noDB {
 		if info, err = e.getMovieInfoFromDB(provider, id); err == nil && info.IsValid() {
 			return // ignore DB query error.
 		}
 	}
 	// delayed info auto-save.
 	defer func() {
-		if err == nil && info.IsValid() {
+		if err == nil && info.IsValid() && !e.noDB {
 			e.db.Clauses(clause.OnConflict{
 				UpdateAll: true,
 			}).Create(info) // ignore error

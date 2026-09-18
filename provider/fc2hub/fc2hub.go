@@ -209,6 +209,13 @@ func (fc2hub *FC2HUB) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, e
 		}
 	})
 
+	// Capture HTML
+	c.OnResponse(func(r *colly.Response) {
+		if info.HTML == "" {
+			info.HTML = string(r.Body)
+		}
+	})
+
 	err = c.Visit(info.Homepage)
 	return
 }

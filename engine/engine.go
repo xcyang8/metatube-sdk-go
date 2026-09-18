@@ -26,6 +26,7 @@ type Engine struct {
 	db      *gorm.DB
 	name    string
 	timeout time.Duration
+	noDB    bool
 	fetcher *fetch.Fetcher
 	// Engine Logger
 	logger *log.Logger

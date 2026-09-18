@@ -140,13 +140,14 @@ func (avl *AVLeague) GetActorInfoByURL(rawURL string) (info *model.ActorInfo, er
 func (avl *AVLeague) SearchActor(keyword string) (results []*model.ActorSearchResult, err error) {
 	c := avl.ClonedCollector()
 
-	c.OnXML(`//*[@id="contents"]/div/div`, func(e *colly.XMLElement) {
+	processResult := func(e *colly.XMLElement) {
 		homepage := e.Request.AbsoluteURL(
 			e.ChildAttr(`.//div[@class="l-name"]/a`, "href"))
 		id, _ := avl.ParseActorIDFromURL(homepage)
-		// Name
 		actor := strings.TrimSpace(e.ChildText(`.//div[@class="l-name"]/a`))
-		// Images
+		if actor == "" {
+			return // skip empty/wrong-level matches
+		}
 		var images []string
 		if img := e.ChildAttr(`.//div[@class="l-pic"]/a/img`, "data-layzr" /* lazy loading */); img != "" {
 			images = []string{e.Request.AbsoluteURL(img)}
@@ -159,6 +160,15 @@ func (avl *AVLeague) SearchActor(keyword string) (results []*model.ActorSearchRe
 			Provider: avl.Name(),
 			Homepage: homepage,
 		})
+	}
+
+	// New HTML structure: #contents > div.l > div.l-box
+	c.OnXML(`//*[@id="contents"]/div[@class="l"]/div[@class="l-box"]`, func(e *colly.XMLElement) {
+		processResult(e)
+	})
+	// Old HTML structure fallback: #contents > div > div
+	c.OnXML(`//*[@id="contents"]/div/div`, func(e *colly.XMLElement) {
+		processResult(e)
 	})
 
 	err = c.Visit(fmt.Sprintf(searchURL, url.QueryEscape(keyword)))

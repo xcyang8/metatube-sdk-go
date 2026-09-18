@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/peterbourgon/ff/v3"
+	"gorm.io/gorm"
 
 	"github.com/metatube-community/metatube-sdk-go/database"
 	"github.com/metatube-community/metatube-sdk-go/engine"
@@ -22,6 +23,7 @@ var Config = &struct {
 	Port  string
 	Token string
 	DSN   string
+	NoDB  bool
 
 	// engine config
 	RequestTimeout time.Duration
@@ -53,20 +55,26 @@ func init() {
 	flag.IntVar(&Config.DBMaxOpenConns, "db-max-open-conns", 0, "Database max open connections")
 	flag.BoolVar(&Config.DBAutoMigrate, "db-auto-migrate", false, "Database auto migration")
 	flag.BoolVar(&Config.DBPreparedStmt, "db-prepared-stmt", false, "Database prepared statement")
+	flag.BoolVar(&Config.NoDB, "no-db", false, "Run without database (proxy mode)")
 	flag.BoolVar(&Config.VersionFlag, "version", false, "Show version")
 	ff.Parse(flag, os.Args[1:], ff.WithEnvVars())
 }
 
 func Router(names ...string) *gin.Engine {
-	db, err := database.Open(&database.Config{
-		DSN:                  Config.DSN,
-		PreparedStmt:         Config.DBPreparedStmt,
-		MaxIdleConns:         Config.DBMaxIdleConns,
-		MaxOpenConns:         Config.DBMaxOpenConns,
-		DisableAutomaticPing: true,
-	})
-	if err != nil {
-		log.Fatal(err)
+	var db *gorm.DB
+	var err error
+
+	if !Config.NoDB {
+		db, err = database.Open(&database.Config{
+			DSN:                  Config.DSN,
+			PreparedStmt:         Config.DBPreparedStmt,
+			MaxIdleConns:         Config.DBMaxIdleConns,
+			MaxOpenConns:         Config.DBMaxOpenConns,
+			DisableAutomaticPing: true,
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// engine options
@@ -82,6 +90,11 @@ func Router(names ...string) *gin.Engine {
 		opts = append(opts, engine.WithEngineName(name))
 	}
 
+	// no database mode
+	if Config.NoDB {
+		opts = append(opts, engine.WithNoDB())
+	}
+
 	// // set actor provider configs if any
 	for provider, config := range envconfig.ActorProviderConfigs.Iterator() {
 		opts = append(opts, engine.WithActorProviderConfig(provider, config))
@@ -95,7 +108,7 @@ func Router(names ...string) *gin.Engine {
 	app := engine.New(db, opts...)
 
 	// always enable auto migrate for sqlite DB
-	if app.DBDriver() == database.Sqlite {
+	if !Config.NoDB && app.DBDriver() == database.Sqlite {
 		Config.DBAutoMigrate = true
 	}
 	if err = app.DBAutoMigrate(Config.DBAutoMigrate); err != nil {

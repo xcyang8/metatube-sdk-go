@@ -204,6 +204,13 @@ func (tht *TokyoHot) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, er
 		}
 	})
 
+	// Capture HTML
+	c.OnResponse(func(r *colly.Response) {
+		if info.HTML == "" {
+			info.HTML = string(r.Body)
+		}
+	})
+
 	err = c.Visit(info.Homepage)
 	return
 }

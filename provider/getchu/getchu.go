@@ -133,6 +133,13 @@ func (gcu *Getchu) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err 
 		}
 	})
 
+	// Capture HTML
+	c.OnResponse(func(r *colly.Response) {
+		if info.HTML == "" {
+			info.HTML = string(r.Body)
+		}
+	})
+
 	err = c.Visit(info.Homepage)
 	return
 }

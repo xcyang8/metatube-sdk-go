@@ -558,6 +558,13 @@ func (fz *FANZA) getMonoMovieInfoByURL(rawURL string) (info *model.MovieInfo, er
 		}
 	})
 
+	// Capture HTML
+	c.OnResponse(func(r *colly.Response) {
+		if info.HTML == "" {
+			info.HTML = string(r.Body)
+		}
+	})
+
 	c.OnScraped(func(r *colly.Response) {
 		if !info.IsValid() && isRegionError(r) {
 			err = ErrRegionNotAvailable

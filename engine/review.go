@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/metatube-community/metatube-sdk-go/engine/providerid"
@@ -12,6 +13,9 @@ import (
 )
 
 func (e *Engine) getMovieReviewsFromDB(provider mt.MovieProvider, id string) (*model.MovieReviewInfo, error) {
+	if e.noDB {
+		return nil, gorm.ErrRecordNotFound
+	}
 	info := &model.MovieReviewInfo{}
 	err := e.db. // Exact match here.
 			Where("provider = ?", provider.Name()).
@@ -30,14 +34,14 @@ func (e *Engine) getMovieReviewsWithCallback(provider mt.MovieProvider, id strin
 		}
 	}()
 	// Query DB first (by id).
-	if lazy {
+	if lazy && !e.noDB {
 		if info, err = e.getMovieReviewsFromDB(provider, id); err == nil && info.IsValid() {
 			return // ignore DB query error.
 		}
 	}
 	// delayed info auto-save.
 	defer func() {
-		if err == nil && info.IsValid() {
+		if err == nil && info.IsValid() && !e.noDB {
 			e.db.Clauses(clause.OnConflict{
 				UpdateAll: true,
 			}).Create(info) // ignore error

@@ -20,6 +20,9 @@ import (
 )
 
 func (e *Engine) searchActorFromDB(keyword string, provider mt.Provider) (results []*model.ActorSearchResult, err error) {
+	if e.noDB {
+		return
+	}
 	var infos []*model.ActorInfo
 	if err = e.db.
 		Where("provider = ? AND name = ? COLLATE NOCASE",
@@ -169,14 +172,14 @@ func (e *Engine) getActorInfoWithCallback(provider mt.ActorProvider, id string, 
 		}
 	}()
 	// Query DB first (by id).
-	if lazy {
+	if lazy && !e.noDB {
 		if info, err = e.getActorInfoFromDB(provider, id); err == nil && info.IsValid() {
 			return
 		}
 	}
 	// Delayed info auto-save.
 	defer func() {
-		if err == nil && info.IsValid() {
+		if err == nil && info.IsValid() && !e.noDB {
 			// Make sure we save the original info here.
 			e.db.Clauses(clause.OnConflict{
 				UpdateAll: true,

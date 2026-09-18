@@ -31,3 +31,9 @@ func WithMovieProviderConfig(name string, config mt.Config) Option {
 		e.movieProviderConfigs.Set(name, config)
 	}
 }
+
+func WithNoDB() Option {
+	return func(e *Engine) {
+		e.noDB = true
+	}
+}

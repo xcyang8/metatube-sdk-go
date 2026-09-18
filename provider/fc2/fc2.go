@@ -181,6 +181,13 @@ func (fc2 *FC2) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err err
 	//	d.Visit(fmt.Sprintf(sampleURL, info.ID))
 	//})
 
+	// Capture HTML
+	c.OnResponse(func(r *colly.Response) {
+		if info.HTML == "" {
+			info.HTML = string(r.Body)
+		}
+	})
+
 	if vErr := c.Visit(info.Homepage); vErr != nil {
 		err = vErr
 	}

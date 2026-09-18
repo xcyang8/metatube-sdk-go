@@ -7,6 +7,7 @@ import (
 
 	"github.com/metatube-community/metatube-sdk-go/engine"
 	"github.com/metatube-community/metatube-sdk-go/engine/providerid"
+	"github.com/metatube-community/metatube-sdk-go/model"
 )
 
 type infoType uint8
@@ -26,7 +27,8 @@ func (uri *infoUri) AsProviderID() providerid.ProviderID {
 }
 
 type infoQuery struct {
-	Lazy bool `form:"lazy"`
+	Lazy        bool `form:"lazy"`
+	IncludeHTML bool `form:"include_html"`
 }
 
 func getInfo(app *engine.Engine, typ infoType) gin.HandlerFunc {
@@ -59,6 +61,14 @@ func getInfo(app *engine.Engine, typ infoType) gin.HandlerFunc {
 		if err != nil {
 			abortWithError(c, err)
 			return
+		}
+
+		// Strip HTML if not requested
+		if !query.IncludeHTML {
+			switch v := info.(type) {
+			case *model.MovieInfo:
+				v.HTML = ""
+			}
 		}
 
 		c.JSON(http.StatusOK, &responseMessage{Data: info})

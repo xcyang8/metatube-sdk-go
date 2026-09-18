@@ -8,7 +8,7 @@ import (
 )
 
 func (e *Engine) DBAutoMigrate(v bool) error {
-	if !v {
+	if !v || e.noDB {
 		return nil
 	}
 	// Create Case-Insensitive Collation for Postgres.
@@ -26,10 +26,16 @@ func (e *Engine) DBAutoMigrate(v bool) error {
 }
 
 func (e *Engine) DBDriver() string {
+	if e.noDB {
+		return "none"
+	}
 	return e.db.Name()
 }
 
 func (e *Engine) DBVersion() (version string, err error) {
+	if e.noDB {
+		return "", fmt.Errorf("no database mode enabled")
+	}
 	switch dbType := e.DBDriver(); dbType {
 	case database.Postgres:
 		err = e.db.Raw("SELECT version();").Scan(&version).Error

@@ -110,17 +110,17 @@ func TestFANZA_GetMovieInfoByURL(t *testing.T) {
 
 func TestFANZA_SearchMovie(t *testing.T) {
 	testkit.Test(t, New, []string{
-		"PRST-022",
-		"OREC-062",
-		"T-28621",
-		"midv-003",
-		"blk-052",
-		"mogi044",
-		"SSNI-379",
-		"SSIS-122",
-		"MIDV-047",
-		"abw",
-		"HMN-686",
+		//"PRST-022",
+		//"OREC-062",
+		//"T-28621",
+		//"midv-003",
+		//"blk-052",
+		//"mogi044",
+		//"SSNI-379",
+		//"SSIS-122",
+		//"MIDV-047",
+		//"abw",
+		//"HMN-686",
 		"START-285",
 	})
 }

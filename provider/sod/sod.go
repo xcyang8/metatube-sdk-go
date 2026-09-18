@@ -161,6 +161,13 @@ func (sod *SOD) GetMovieInfoByURL(rawURL string) (info *model.MovieInfo, err err
 		info.Score = parser.ParseScore(e.Text)
 	})
 
+	// Capture HTML
+	c.OnResponse(func(r *colly.Response) {
+		if info.HTML == "" {
+			info.HTML = string(r.Body)
+		}
+	})
+
 	defer func() {
 		// Validate cover image
 		if err == nil && !isValidImageURL(info.CoverURL) {

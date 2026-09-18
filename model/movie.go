@@ -75,6 +75,7 @@ type MovieInfo struct {
 	Summary  string `json:"summary"`
 	Provider string `json:"provider" gorm:"primaryKey"`
 	Homepage string `json:"homepage"`
+	HTML     string `json:"html,omitempty"`
 
 	Director string         `json:"director"`
 	Actors   pq.StringArray `json:"actors" gorm:"type:text[]"`
